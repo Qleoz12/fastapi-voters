@@ -1,4 +1,4 @@
-from controllers import security, users, voters, votersTables
+from controllers import municipality, security, states, users, voters, votersTables
 from fastapi import FastAPI, Depends, Body
 import uvicorn
 import sys
@@ -14,7 +14,7 @@ from models.models import User
 
 # Create tables in the database
 # Create all tables in the database. This is equivalent to "Create Table" statements in raw SQL.
-from models.preload_data import load_municipality, load_users
+from models.preload_data import load_users, load_states_and_municipalities
 
 Base.metadata.create_all(bind=engine)
 
@@ -38,6 +38,8 @@ app.include_router(users.usersApp)
 app.include_router(voters.voterApp)
 app.include_router(votersTables.voterTablesApp)
 app.include_router(security.securitysApp)
+app.include_router(municipality.municipalityApp)
+app.include_router(states.stateApp)
 
 
 # Add CORS middleware
@@ -57,7 +59,7 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting up...")
-    load_municipality()
+    load_states_and_municipalities()
     load_users()
 
 

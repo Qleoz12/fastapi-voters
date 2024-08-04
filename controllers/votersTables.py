@@ -2,12 +2,13 @@
 from sqlite3 import IntegrityError
 from typing import List
 
+from auth.authorizations import authorize
 from fastapi import APIRouter
 from fastapi import Depends ,status,HTTPException
 
 from auth.authentications import get_current_user
 from models.db import get_db
-from models.models import VotersTable
+from models.models import UserRole, VotersTable
 from models.shcemas import UserSchema, VoterSchema, VotersTableSchema
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,7 @@ voterTablesApp = APIRouter(prefix="/votersTable",
 
 
 @voterTablesApp.post('/')
+@authorize(role=[UserRole.ADMIN, UserRole.LEAD])
 def add(votersTable: VotersTableSchema, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     existing_user = db.query(VotersTable).filter(
         VotersTable.code == votersTable.code,
@@ -34,12 +36,14 @@ def add(votersTable: VotersTableSchema, db: Session = Depends(get_db), current_u
 
 
 @voterTablesApp.get('/', response_model=List[VotersTableSchema])
+@authorize(role=[UserRole.ADMIN, UserRole.LEAD])
 def read_all(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     voters = db.query(VotersTable).all()
     return voters
 
 
 @voterTablesApp.get('/{voter_id}', response_model=VotersTableSchema)
+@authorize(role=[UserRole.ADMIN, UserRole.LEAD])
 def read_voter(voter_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     voter = db.query(VotersTable).filter(VotersTable.id == voter_id).first()
     if not voter:
@@ -48,6 +52,7 @@ def read_voter(voter_id: int, db: Session = Depends(get_db), current_user: dict 
 
 
 @voterTablesApp.put('/{voter_id}', response_model=VotersTableSchema)
+@authorize(role=[UserRole.ADMIN, UserRole.LEAD])
 def update(voter_id: int, votersTable: VotersTableSchema, db: Session = Depends(get_db),
            current_user: dict = Depends(get_current_user)):
     voter = db.query(VotersTable).filter(VotersTable.id == voter_id).first()
@@ -68,6 +73,7 @@ def update(voter_id: int, votersTable: VotersTableSchema, db: Session = Depends(
 
 
 @voterTablesApp.delete('/{voter_id}', response_model=dict)
+@authorize(role=[UserRole.ADMIN])
 def delete(voter_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     voter = db.query(VotersTable).filter(VotersTable.id == voter_id).first()
     if not voter:
